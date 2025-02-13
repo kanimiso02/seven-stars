@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Seven Stars</title>
+  <style>
+    body {
+      background: #000;
+      color: #fff;
+      font-family: sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    /* メッセージエリア */
+    #message {
+      margin-top: 10px;
+      font-size: 1.4em;
+    }
+    /* 入力欄・ボタン */
+    input, button {
+      font-size: 1.2em;
+      padding: 5px;
+    }
+    /* 星（軌道）表示領域 */
+    #orbitContainer {
+      position: relative;
+      width: 600px;
+      height: 600px;
+      margin: 20px auto;
+    }
+    /* フォーム表示領域 */
+    #formContainer {
+      margin-top: 20px;
+    }
+    .star {
+      position: absolute;
+      width: 30px;  /* 固定サイズ：30px×30px */
+      height: 30px;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+  </style>
+</head>
+<body>
+  <h1>Seven Stars</h1>
+  <!-- 入力欄は6桁までに制限 -->
+  <input type="text" id="inputStr" maxlength="6">
+  <button id="createBtn">CREATE</button>
+  <div id="message"></div>
+  <div id="orbitContainer"></div>
+  <div id="formContainer"></div>
+  
+  <script>
+    // マッピングルール：各グループごとに割り当てる数字
+    // グループ1: "0DO"        -> 0
+    // グループ2: "12357CLMNGSUVWZI" -> 1
+    // グループ3: "4R"         -> 2
+    // グループ4: "69PQ"        -> 3
+    // グループ5: "8B"         -> 4
+    // グループ6: "A"          -> 5
+    // グループ7: "EFJTY"       -> 6
+    // グループ8: "H"          -> 7
+    // グループ9: "K"          -> 8
+    // グループ10: "X"         -> 9
+    const mapping = {};
+    "0DO".split("").forEach(ch => { mapping[ch] = "0"; });
+    "12357CLMNGSUVWZI".split("").forEach(ch => { mapping[ch] = "1"; });
+    "4R".split("").forEach(ch => { mapping[ch] = "2"; });
+    "69PQ".split("").forEach(ch => { mapping[ch] = "3"; });
+    "8B".split("").forEach(ch => { mapping[ch] = "4"; });
+    "A".split("").forEach(ch => { mapping[ch] = "5"; });
+    "EFJTY".split("").forEach(ch => { mapping[ch] = "6"; });
+    "H".split("").forEach(ch => { mapping[ch] = "7"; });
+    "K".split("").forEach(ch => { mapping[ch] = "8"; });
+    "X".split("").forEach(ch => { mapping[ch] = "9"; });
+    
+    // 入力文字列を大文字に変換し、規則に従って変換する関数
+    function convertInput(str) {
+      str = str.toUpperCase();
+      let result = "";
+      for (let i = 0; i < str.length; i++) {
+        const ch = str[i];
+        if (!(/[0-9A-Z]/.test(ch))) return null;
+        if (!(ch in mapping)) return null;
+        result += mapping[ch];
+      }
+      return result;
+    }
+    
+    // 素因数分解関数（シンプル実装）
+    function primeFactors(n) {
+      const factors = [];
+      while (n % 2 === 0) {
+        factors.push(2);
+        n /= 2;
+      }
+      let f = 3;
+      while (f * f <= n) {
+        while (n % f === 0) {
+          factors.push(f);
+          n /= f;
+        }
+        f += 2;
+      }
+      if (n > 1) factors.push(n);
+      return factors;
+    }
+    
+    // 各素因数の出現回数をカウントする関数
+    function getExponentCounts(factors) {
+      const counts = {};
+      factors.forEach(f => {
+        counts[f] = (counts[f] || 0) + 1;
+      });
+      return counts;
+    }
+    
+    // 許容される素因数（軌道）の順序：内側から外側へ
+    const allowedPrimes = [2, 3, 5, 7, 11, 13, 17];
+    // クリア条件の最終答え
+    const finalAnswer = 510510;
+    
+    document.getElementById("createBtn").addEventListener("click", function(){
+      const inputField = document.getElementById("inputStr");
+      let rawInput = inputField.value.trim();
+      const upperInput = rawInput.toUpperCase();
+      inputField.value = upperInput; // 入力欄に大文字を反映
+      
+      const orbitContainer = document.getElementById("orbitContainer");
+      orbitContainer.innerHTML = "";
+      const messageDiv = document.getElementById("message");
+      messageDiv.innerHTML = "";
+      const formContainer = document.getElementById("formContainer");
+      formContainer.innerHTML = "";
+      
+      const convertedStr = convertInput(upperInput);
+      if (convertedStr === null) {
+        messageDiv.innerHTML = "<p style='color:red;'>Warning: Unable to create</p>";
+        return;
+      }
+      
+      const decimalValue = parseInt(convertedStr, 10);
+      if (isNaN(decimalValue) || decimalValue === 0) {
+        messageDiv.innerHTML = "<p style='color:red;'>Warning: Unable to create</p>";
+        return;
+      }
+      
+      // クリア条件チェック：最終答え 510510
+      if (decimalValue === finalAnswer) {
+        messageDiv.innerHTML = "<p style='color:#0f0;'>You create the Seven Stars!</p>";
+      }
+      
+      const factors = primeFactors(decimalValue);
+      const exponentCounts = getExponentCounts(factors);
+      
+      // orbitContainer の中心点（星の配置の起点）
+      const containerWidth = orbitContainer.clientWidth;
+      const containerHeight = orbitContainer.clientHeight;
+      const centerX = containerWidth / 2;
+      // 星の配置全体を下にずらすために centerY に50pxを追加
+      const centerY = containerHeight / 2 + 50;
+      
+      // 各軌道の設定：内側から外側へ
+      const baseRadius = 50;
+      const orbitSpacing = 50;
+      const starSize = 30;  // 星のサイズは30px × 30px
+      
+      // 各許容素因数について、軌道上に星を配置
+      allowedPrimes.forEach((p, index) => {
+        const count = exponentCounts[p] || 0;
+        if (count > 0) {
+          const radius = baseRadius + index * orbitSpacing;
+          // 地上180°を (count+1) 等分して星を配置
+          for (let i = 0; i < count; i++) {
+            const angleDeg = (i + 1) * (180 / (count + 1));
+            const angleRad = angleDeg * Math.PI / 180;
+            const x = centerX + radius * Math.cos(angleRad) - starSize / 2;
+            const y = centerY - radius * Math.sin(angleRad) - starSize / 2;
+            const starElem = document.createElement("div");
+            starElem.className = "star";
+            starElem.style.left = x + "px";
+            starElem.style.top = y + "px";
+            // star.png を同じディレクトリ内から直接読み込む
+            starElem.style.backgroundImage = "url('star.png')";
+            orbitContainer.appendChild(starElem);
+          }
+        }
+      });
+      
+      // クリア条件達成時は、フォームも表示（最終答えなら）
+      if (decimalValue === finalAnswer) {
+        const iframe = document.createElement("iframe");
+        iframe.src = "https://forms.gle/V2JLwhiWH8zw9hzD6";
+        iframe.width = "600";
+        iframe.height = "800";
+        iframe.style.border = "none";
+        formContainer.appendChild(iframe);
+      }
+    });
+  </script>
+</body>
+</html>
